@@ -1,0 +1,41 @@
+name: Deploy to Github
+
+on:
+
+  push:
+    branches:
+      ts
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: npm i
+    - run: npm build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare ssh key
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SERVER_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOY_SERVER_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_SERVER_USER }}
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/aws.pem
+          chmod 400 ~/.ssh/aws.pem
+          cat >>~/.ssh/config <<END
+          Host staging
+            HostName $SSH_HOST
+            User $SSH_USER
+            Port 22
+            IdentityFile ~/.ssh/aws.pem
+            StrictHostKeyChecking no
+          END
+
+      - name: Execute SSH commands on remote server
+        run: ssh staging 'cd bogdan-todo-backend/ && git checkout ts && docker-compose down && eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_rsa_backend && git pull origin ts && docker-compose build && docker-compose up -d'

@@ -1,0 +1,1 @@
+export interface ItemRecordPayload {id: number, text: string, is_completed: boolean, user_id: number}
