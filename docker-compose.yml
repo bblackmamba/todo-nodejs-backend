@@ -1,0 +1,37 @@
+version: "3.0"
+services:
+  postgres:
+    image: postgres:11.2-alpine
+    hostname: postgres
+    container_name: postgres
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=selectel
+      - POSTGRES_DB=selectel
+    ports:
+      - 5432:5432
+    networks: 
+      - todo
+
+  app:
+    build: .
+    depends_on:
+      - postgres
+    links:
+      - postgres
+    restart: on-failure
+    ports:
+      - 3001:3001
+    environment:
+      - PGPASSWORD=postgres
+      - PGUSER=selectel
+      - PGDATABASE=selectel
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PORT=3001
+    networks: 
+      - todo
+
+networks: 
+  todo:
+    driver: bridge
